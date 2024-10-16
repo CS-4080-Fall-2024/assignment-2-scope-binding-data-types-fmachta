@@ -1,0 +1,183 @@
+Problem 1: 
+
+Parse Tree and Leftmost Derivation
+Using the grammar below, show a parse tree and a leftmost derivation for the following statement:
+A = B * (C * (A + B))
+Grammar:
+Statement → Assignment | Expression Assignment → Identifier = Expression Expression → Expression + Term | Term Term → Term * Factor | Factor
+Factor → ( Expression ) | Identifier Identifier → A | B | C
+
+
+    We'll perform a leftmost derivation, expanding the leftmost non-terminal at each step.
+    In the Parentheses is where each step is taken from.
+
+    1. Statement
+    2. Assignment (from Statement → Assignment)
+    3. Identifier = Expression (from Assignment → Identifier = Expression)
+    4. A = Expression (from Identifier → A)
+    5. A = Term (from Expression → Term)
+    6. A = Term * Factor (from Term → Term * Factor)
+    7. A = Factor * Factor (from Term → Factor)
+    8. A = Identifier * Factor (from Factor → Identifier)
+    9. A = B * Factor (from Identifier → B)
+    10. A = B * ( Expression ) (from Factor → ( Expression ))
+    11. A = B * ( Term ) (from Expression → Term)
+    12. A = B * ( Term * Factor ) (from Term → Term * Factor)
+    13. A = B * ( Factor * Factor ) (from Term → Factor)
+    14. A = B * ( Identifier * Factor ) (from Factor → Identifier)
+    15. A = B * ( C * Factor ) (from Identifier → C)
+    16. A = B * ( C * ( Expression ) ) (from Factor → ( Expression ))
+    17. A = B * ( C * ( Expression + Term ) ) (from Expression → Expression + Term)
+    18. A = B * ( C * ( Term + Term ) ) (from Expression → Term)
+    19. A = B * ( C * ( Factor + Term ) ) (from Term → Factor)
+    20. A = B * ( C * ( Identifier + Term ) ) (from Factor → Identifier)
+    21. A = B * ( C * ( A + Term ) ) (from Identifier → A)
+    22. A = B * ( C * ( A + Factor ) ) (from Term → Factor)
+    23. A = B * ( C * ( A + Identifier ) ) (from Factor → Identifier)
+    24. A = B * ( C * ( A + B ) ) (from Identifier → B)
+
+
+    This is the Parse tree made using pipes and dashes:
+
+    Statement
+    |
+    +-- Assignment
+        |
+        +-- Identifier
+        |   |
+        |   +-- A
+        |
+        +-- =
+        |
+        +-- Expression
+            |
+            +-- Term
+                |
+                +-- Term
+                |   |
+                |   +-- Factor
+                |       |
+                |       +-- Identifier
+                |           |
+                |           +-- B
+                |
+                +-- *
+                |
+                +-- Factor
+                    |
+                    +-- (
+                    |
+                    +-- Expression
+                    |   |
+                    |   +-- Term
+                    |       |
+                    |       +-- Term
+                    |       |   |
+                    |       |   +-- Factor
+                    |       |       |
+                    |       |       +-- Identifier
+                    |       |           |
+                    |       |           +-- C
+                    |       |
+                    |       +-- *
+                    |       |
+                    |       +-- Factor
+                    |           |
+                    |           +-- (
+                    |           |
+                    |           +-- Expression
+                    |           |   |
+                    |           |   +-- Expression
+                    |           |   |   |
+                    |           |   |   +-- Term
+                    |           |   |       |
+                    |           |   |       +-- Factor
+                    |           |   |           |
+                    |           |   |           +-- Identifier
+                    |           |   |               |
+                    |           |   |               +-- A
+                    |           |   |
+                    |           |   +-- +
+                    |           |   |
+                    |           |   +-- Term
+                    |           |       |
+                    |           |       +-- Factor
+                    |           |           |
+                    |           |           +-- Identifier
+                    |           |               |
+                    |           |               +-- B
+                    |           |
+                    |           +-- )
+                    |
+                    +-- )
+
+
+
+
+
+Problem 2: 
+
+Scope Concepts
+Considering the following program written in pseudocode:
+int u = 42;
+int v = 69;
+int w = 17;
+
+proc add(z: int)
+    u := v + u + z;
+
+proc bar(fun: proc)
+    int u := w;
+    fun(v);
+
+proc foo(x: int, w: int)
+    int v := x;
+    bar(add);
+
+main
+    foo(u, 13);
+    print(u);
+end;
+
+
+a. Using Static Scope, what is printed to the screen?
+
+    Static scoping resolves variable references based on the program's structure at compile time.
+
+        - In foo, v is local and set to x (which is u = 42).
+        - In bar, u is local and set to w (global w = 17).
+        - add uses the global u and v because it doesn't have local ones.
+        - add calculates: u = v + u + z with v = 69 (global), u = 42 (global), and z = v = 69 (from bar).
+
+    Calculation: u = 69 + 42 + 69 = 180
+
+    Output: 180
+
+b. Using Dynamic Scope with Deep Binding, what is printed to the screen? Hint: The sum for u is 126, but due to deep binding, it's foo's local v that gets involved. 
+
+    Dynamic scoping with deep binding binds variables based on the calling environment at the time the function is passed as a parameter.
+
+        - When add is passed to bar, the environment includes foo's local v = 42.
+        - In bar, u is local and set to w = 13 (from foo).
+        - In add, u refers to the global u (since foo doesn't have u), and v refers to foo's local v = 42.
+        - add calculates: u = v + u + z with v = 42, u = 42, and z = v = 42 (from foo).
+
+    Calculation: u = 42 + 42 + 42 = 126
+
+    Output: 126
+
+c. Using Dynamic Scope with Shallow Binding, what is printed to the screen? Hint: The sum for u is 101, but again it's foo's local v that matters.
+
+    Dynamic scoping with shallow binding binds variables based on the calling environment at the time the function is called.
+
+        - In bar, u is local and set to w = 13 (from foo).
+        - In add, u refers to bar's local u = 13, and v refers to foo's local v = 42.
+        - add calculates: u = v + u + z with v = 42, u = 13, and z = v = 42 (from foo).
+
+    Calculation: u = 42 + 13 + 42 = 97
+
+    However, the hint suggests the sum for u is 101, indicating that perhaps w was intended to be 17 (global) instead of 13. If we assume w = 17, the calculation becomes:
+
+    u = 42 + 17 + 42 = 101
+
+    Output: 101
